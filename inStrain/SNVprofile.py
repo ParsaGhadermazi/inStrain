@@ -479,7 +479,9 @@ class SNVprofile:
             return scdb.sort_values('mm')\
                     .drop_duplicates(subset=['scaffold', 'name1', 'name2'], keep='last')\
                     .sort_index().drop(columns=['mm'])
-
+####################FIX_NEEDED################################
+    # Assumin still using pandas:
+    # scdb.groupby("scaffold").agg({"mm": "min"}).reset_index()
     def get_nonredundant_scaffold_table(self):
         '''
         Get a scaffold table with just one line per scaffold
@@ -612,6 +614,8 @@ class SNVprofile:
         '''
         Load the attributes file
         '''
+        #############################FIX_NEEDED################################
+        # A Process Semaphore is needed here to prevent the file from being read while being written
 
         Aloc = str(os.path.join(self.location, 'raw_data/attributes.tsv')).strip()
         # This crazy mumbo-jumbo is to prevent a failure when trying to read while its being written
@@ -830,15 +834,13 @@ class SNVprofile:
             warnings.simplefilter("ignore")
             return pd.read_csv(location, index_col=0)
 
-    def _store_pickle(self, obj, location):
-        f = open(location, 'wb')
-        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
-        f.close()
+    def _store_pickle(self, obj, location)->None:
+        with open(location, 'wb') as f:
+            pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
-    def _load_pickle(self, location):
-        f = open(location, 'rb')
-        tmp_dict = pickle.load(f)
-        f.close()
+    def _load_pickle(self, location:str) -> dict:
+        with open(location, 'rb') as f:
+            tmp_dict = pickle.load(f)
         return tmp_dict
 
     def _store_dictionary(self, dic, location):
